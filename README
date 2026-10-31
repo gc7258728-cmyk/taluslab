@@ -1,0 +1,256 @@
+COPIE AUTONOME DE DÉPLOIEMENT
+
+Cette archive utilise requirements.txt ; le dossier source conserve requirement.text.
+Envoyer les trois fichiers à la racine du dépôt GitHub.
+
+TALUSLAB — ATELIER DES PENTES
+Version 1.0 / application pédagogique en français / génie civil
+
+1. DÉMARRAGE SOUS WINDOWS
+
+Ouvrir ce dossier dans VS Code, puis Terminal > Nouveau terminal.
+Environnement de validation : Python 3.14 sous Windows.
+
+    python -m pip install -r requirements.txt
+    python -m streamlit run app.py
+
+Ouvrir l'adresse locale indiquée dans le terminal. Si le port est occupé :
+
+    python -m streamlit run app.py --server.port 8550
+
+Le dossier livré contient uniquement app.py, requirements.txt et README.
+Toutes les ressources, fonctions, styles et schémas sont dans app.py.
+L'application ne demande ni compte, ni clé API, ni service payant.
+
+2. PARCOURS CONSEILLÉ
+
+ATELIER DU TALUS
+- Mode Découverte : deux angles, pente β et frottement effectif φ′.
+- Actualiser la coupe applique les réglages du formulaire.
+- Le sol est sans cohésion et sans pression interstitielle dans ce mode.
+- Mode Étude détaillée : ajouter c′, γ, z et u.
+- La coupe est une fenêtre de pente longue, à échelles x/y égales.
+  Le plan de glissement étudié est parallèle à la surface ; z est VERTICAL.
+- Donner un nom au scénario pour l'ajouter à Comparaison.
+- Un formulaire erroné laisse la dernière coupe valide affichée.
+
+COMPARAISON
+- Enregistrer jusqu'à 20 scénarios et comparer leurs facteurs F.
+- Examiner la coupe d'un scénario, le reprendre ou le retirer.
+- Ajouter explicitement les trois scénarios fictifs ; les scénarios existants
+  sont conservés et les exemples ne sont pas ajoutés deux fois.
+
+DONNÉES DE SOL
+- Saisie manuelle, import CSV/XLSX ou exemple fictif de sept observations.
+- L'éditeur permet de modifier ou supprimer des lignes avant application.
+- Séparer les séries correspondant à des sols et protocoles différents.
+- Calculs : moyenne, médiane, variance et écart-type d'échantillon (n−1), CV.
+- Histogramme par variable et par série, audit des exclusions.
+- Transférer volontairement les moyennes vers l'atelier ; les autres
+  paramètres (pente, z et u) restent inchangés. Vérifier leur cohérence.
+- Aucun ajustement automatique d'une loi à quelques observations.
+
+INCERTITUDES
+- Configuration indépendante du calcul actif, affichée avec ses résultats.
+- Reprendre explicitement les paramètres de l'atelier si souhaité.
+- β, γ et z restent fixes ; φ′, c′ et u varient indépendamment.
+- Lois uniformes ou triangulaires, mode triangulaire au milieu de l'intervalle.
+- Deux bornes égales représentent une constante.
+- 1 000 à 100 000 tirages ; graine reproductible ; tous les tirages sont gardés.
+- P(F < 1), quantiles, histogramme, courbe cumulée, sensibilité de Spearman.
+- L'intervalle de Wilson à 95 % quantifie l'erreur numérique du tirage,
+  pas les erreurs des observations ou les limites du modèle de sol.
+- Les corrélations de rang décrivent cette simulation et ses bornes ; elles
+  ne sont ni une preuve de causalité sur un site ni une décomposition de variance.
+- Modifier un formulaire ne remplace le résultat qu'après son lancement.
+
+RAPPORTS ET MÉTHODES
+- Préparer le PDF et le classeur Excel après sélection des options.
+- Toute modification pertinente invalide les téléchargements déjà préparés.
+- Excel contient les paramètres, scénarios, lignes brutes, exclusions,
+  statistiques par série et, si demandé, hypothèses et tirages Monte-Carlo.
+- CSV : sols analysables ou tirages de simulation.
+- JSON : sauvegarde des paramètres, scénarios, lignes brutes et configuration
+  de simulation ; les tirages sont reproduits à la restauration avec la graine.
+- Les données restent en mémoire de session. Fermer/perdre une session ou
+  redémarrer le serveur peut les effacer. Sauvegarder le carnet JSON.
+- Aucun fichier de données n'est écrit dans le dossier livré.
+
+3. MODÈLE MÉCANIQUE ET UNITÉS
+
+Modèle de pente infinie homogène, plan parallèle, contraintes effectives.
+Les angles sont entrés en degrés et convertis en radians pour Python.
+
+    sigma_n = gamma × z × cos²(beta)                  [kPa]
+    tau     = gamma × z × sin(beta) × cos(beta)       [kPa]
+    sigma'_n = sigma_n − u                           [kPa]
+    résistance = c′ + sigma'_n × tan(phi′)            [kPa]
+    F = résistance / tau                             [sans unité]
+
+β : angle de la surface avec l'horizontale, en degrés.
+φ′ : angle de frottement effectif du sol, en degrés.
+c′ : cohésion effective du sol, en kPa.
+γ : poids volumique total pour l'état de sol étudié, en kN/m³.
+z : profondeur verticale entre surface et plan parallèle, en m.
+u : pression interstitielle au plan étudié, en kPa.
+
+Sol sec sans cohésion : c′ = u = 0, d'où F = tan(phi′)/tan(beta).
+u n'est pas une pluie, une teneur en eau ou une hauteur de nappe.
+L'application ne convertit pas une pluie en pression et ne calcule pas
+d'écoulement hydraulique. Si l'état hydrique change, réexaminer aussi γ et
+les autres paramètres ; comparer u seul est un exercice à γ constant.
+Le mode détaillé ne traite ni succion, ni surcharge, ni séisme, ni rupture
+circulaire, ni couches multiples, ni résistance non drainée.
+u doit rester entre 0 et sigma_n. Au-delà, la perte de contact est hors modèle.
+
+F = 1 : équilibre théorique de ce calcul.
+F < 1 : résistance insuffisante dans le modèle étudié.
+F > 1 : résistance supérieure aux efforts calculés, sans validation de sécurité.
+Les bornes informatiques (β 1–75°, φ′ 0–60°, c′ 0–100 kPa, γ 10–30 kN/m³,
+z 0,2–20 m, u 0–300 kPa) sont des limites de saisie, PAS des normes.
+Une tolérance numérique de 10^-12 sur F évite de classer un équilibre
+exact comme F < 1 à cause des arrondis de calcul flottant.
+
+La probabilité affichée est conditionnelle aux distributions choisies. Elle
+n'est ni un risque annuel de glissement réel, ni une certification d'un talus.
+La diminution d'une pente ou d'une pression peut être étudiée comme scénario,
+mais le programme ne dimensionne pas une solution de drainage ou de confortement.
+
+4. IMPORTER ET CONTRÔLER LES DONNÉES
+
+Colonnes requises :
+    phi_deg       frottement effectif, degrés, 0 à 60
+    c_kpa         cohésion effective, kPa, 0 à 100
+    gamma_kn_m3   poids volumique, kN/m³, 10 à 30
+
+Colonnes facultatives : id, serie, origine.
+Si absentes : id généré, série « Série importée », origine « Déclaré par
+l’utilisateur ». L'utilisateur doit ensuite documenter la source réelle.
+Une origine manquante dans une colonne présente est une anomalie.
+CSV UTF-8, séparateur virgule ou point-virgule ; décimales point ou virgule
+(utiliser le point-virgule avec des décimales françaises). Première feuille XLSX.
+Maximum 2 Mo et 20 000 lignes. Chaque id doit être unique dans le carnet.
+Lignes vides, valeurs impossibles, non numériques ou infinies sont exclues,
+avec numéro de ligne et motif. Les données brutes restent conservées.
+Le fichier importé n'est activé qu'après choix explicite de remplacement.
+Les textes susceptibles d'être interprétés comme formules par Excel sont
+échappés à l'export CSV/Excel. Les textes affichés dans le HTML sont échappés.
+
+5. TESTS À REPRODUIRE À LA CALCULATRICE
+
+A. Découverte : β = 20°, φ′ = 30°, c′ = u = 0.
+   F = tan(30°)/tan(20°) = 1,5862568277, soit 1,59 à l'écran.
+   Modifier β = 35° : F = 0,8245416364, soit 0,82.
+   La calculatrice doit être en mode DEGRÉS.
+
+B. Eau : β = φ′ = 30°, γ = 20 kN/m³, z = 2 m, c′ = 0.
+   sigma_n = 30 kPa ; tau = 17,320508 kPa.
+   u = 0 : F = 1 ; u = 10 kPa : F = 2/3 = 0,666667.
+   Essayer u = 31 kPa : calcul refusé, car sigma'_n devient négative.
+
+C. Cohésion : mêmes paramètres que B, u = 0, c′ = 5 kPa.
+   F = 1 + 5/17,320508 = 1,2886751346.
+
+D. Trois scénarios de démonstration :
+   pente 20°, sèche : F = 1,5863 ; pente 35°, sèche : F = 0,8245.
+   pente 20°, u = 10 kPa : environ F = 1,1372.
+
+E. Sept essais fictifs : φ′ = 27,28,29,30,31,32,33°.
+   Moyenne = médiane = 30° ; somme des écarts au carré = 28 degrés².
+   Variance = 28/6 = 4,6666667 degrés² ; écart-type = 2,1602469°.
+   CV = 100 × 2,1602469/30 = 7,200823 %.
+   Moyennes de c′ et γ : 4 kPa et 19,5 kN/m³.
+   Ces chiffres sont FICTIFS et ne décrivent aucun site réel.
+
+F. Test probabiliste : β = 30°, c′ = u = 0, φ′ uniforme sur [25°,35°].
+   F < 1 équivaut à φ′ < 30° : probabilité exacte = (30−25)/(35−25) = 50 %.
+   Pour n = 10 000, écart-type Monte-Carlo = sqrt(0,5×0,5/10000) = 0,005,
+   soit 0,5 point ; marge approximative à 95 % = ±0,98 point.
+   Une réalisation peut sortir de cette plage ; changer la graine donne
+   une autre estimation. Une même graine et configuration reproduisent le test.
+
+6. DÉPENDANCES
+
+streamlit : interface, formulaires, navigation, session et téléchargements.
+pandas : import, nettoyage et tableaux de données.
+numpy : trigonométrie vectorisée, quantiles et générateur aléatoire.
+scipy : quantile normal pour l'intervalle de Wilson et corrélation de Spearman.
+altair : graphiques interactifs avec infobulles.
+openpyxl : lecture et écriture des fichiers Excel.
+reportlab : rapports PDF et diagramme vectoriel ; polices fournies par le paquet.
+math/json/io/pathlib/hashlib/html/datetime/copy sont inclus dans Python.
+
+Les versions de requirements.txt sont celles utilisées pour la validation
+locale. Utiliser le même Python (3.14) pour les reproduire.
+
+7. GITHUB ET STREAMLIT COMMUNITY CLOUD
+
+Cette COPIE utilise requirements.txt. Le dossier source livré séparément
+conserve requirement.text. Le contenu des dépendances est identique.
+
+Créer un dépôt distinct nommé, par exemple, taluslab. Dans Add file > Upload
+files, sélectionner les trois fichiers de CETTE archive : app.py,
+requirements.txt et README, puis Commit changes. Les placer à la racine,
+sur la branche main. Ne pas créer de sous-dossier supplémentaire dans GitHub.
+
+Alternative depuis le terminal VS Code de cette copie :
+    git init
+    git add .
+    git commit -m "Première version de TalusLab"
+    git branch -M main
+    git remote add origin https://github.com/VOTRE-COMPTE/taluslab.git
+    git remote -v
+    git push -u origin main
+
+Remplacer VOTRE-COMPTE et créer le dépôt avant l'envoi. Contrôler la
+destination avec git remote -v si un remote existe déjà.
+
+Community Cloud : Create app, choisir le dépôt, main, app.py.
+Dans Advanced settings, choisir Python 3.14 si disponible pour reproduire
+les tests, puis Deploy. Si Paste URL est proposé, fournir l'URL du fichier :
+    https://github.com/VOTRE-COMPTE/taluslab/blob/main/app.py
+Le lien de partage de l'application sera en https://....streamlit.app.
+Cette livraison ne crée pas elle-même un dépôt ou un domaine public.
+
+Pour mettre à jour, recopier le nouvel app.py depuis le dossier source ;
+si les dépendances changent, recopier le contenu de requirement.text dans
+requirements.txt dans cette copie. Puis :
+    git status
+    git add .
+    git commit -m "Amélioration de TalusLab"
+    git push
+
+En cas de ModuleNotFoundError : vérifier requirements.txt, la branche et
+le fichier déployés, puis les journaux dans Manage app. Reboot ne corrige
+pas un fichier de dépendances mal nommé.
+
+Documentation :
+https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
+
+8. SOURCES DU MODÈLE
+
+GeoEq — pente infinie, cas sec et équations :
+https://docs.geoeq.org/modules/design/slopes/
+University of the West of England — mécanique des pentes et pression d'eau :
+https://environment.uwe.ac.uk/geocal/slopes/slopmech.htm
+
+La formule détaillée combine l'équilibre de la pente infinie et le critère
+de résistance effective c′ + (sigma_n − u) tan(phi′). Aucune donnée locale,
+valeur caractéristique réglementaire ou classe de sécurité n'est inventée.
+
+9. VÉRIFICATIONS ET PORTÉE DE LA LIVRAISON
+
+Vérifications réalisées le 31/10/2026 :
+- 43 tests automatisés : mécanique, tolérances, contrôles des entrées,
+  probabilités, reproductibilité, nettoyage, CSV/XLSX, PDF et interfaces.
+- Navigation et absence de débordement horizontal aux largeurs 1440, 768,
+  390 et 320 pixels dans Edge ; inspection des captures sur ordinateur/mobile.
+- Parcours complet sur ordinateur et téléphone simulé : saisie, erreur de u,
+  reprise de scénario, simulation, import, exports et restauration JSON.
+- Six PDF de test, de 3 à 6 pages : rendu contrôlé, marges et glyphes vérifiés,
+  dont rapports réellement téléchargés depuis le navigateur.
+- Installation des dépendances et démarrage local confirmés.
+
+Les scripts et captures de vérification sont placés hors de ce dossier.
+Le déploiement sur un compte GitHub/Streamlit réel et l'utilisation sur un
+téléphone physique restent à effectuer ; les tests locaux ne les remplacent pas.
